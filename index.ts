@@ -22,10 +22,9 @@ const unsortedArr = lazyToGreedy([2, 4, 1, 3]);
 const sorted: LazyArray<number> = lazyQuicksort(unsortedArr, (a, b) => () => a() - b());
 console.log(sorted().map(l => l()));
 
-const mapLazy = <T, U>(arr: LazyArray<T>, mapper: (val: T) => U): LazyArray<U> => {
-    return lazify(arr().map(l => lazify(mapper(l()))));
-};
+const mapLazy = <T, U>(val: Lazy<T>, mapper: (value: T) => U): Lazy<U> => lazify(mapper(val()));
+const bindLazy = <T, U>(val: Lazy<T>, binder: (value: T) => Lazy<U>): Lazy<U> => binder(val());
 
-const mapped = mapLazy(sorted, (l) => l * 2);
+console.log(bindLazy(lazify(5), (l) => lazify(`blah: ${l * 2}`))());
 
-console.log(mapped().map(l => l()));
+const applyLazy = <T, U>(val: Lazy<T>, func: Lazy<(v: T) => U>): Lazy<U> => lazify(func()(val()));
