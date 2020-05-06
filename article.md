@@ -90,26 +90,79 @@ const lazyQuicksort = <T extends Comparable>(arr: LazyArray<T>, comparator: (a: 
 
 Look at the `lazify` calls. Because this is a lazy version of quicksort, with a lazy comparator, it's important to remember that all arguments going into the comparator must be lazy. We also return a lazy array, so we `lazify` the final array. We also make sure that T is of type number or boolean because when you subtract them, it does not return NaN.
 
-Now let's test this thing out! First we will define an unsorted, lazy array:
+Now let's test this thing out! First we will define an unsorted, lazy array. Then we will sort it with out `lazyQuicksort` function, and then we will collapse it.
 
 ```typescript
 const unsortedArr = lazyToGreedy([2, 4, 1, 3]);
-```
-
-Then we will sort it with our `lazyQuicksort` function:
-
-```typescript
 const sorted = lazyQuicksort(unsortedArr, (a, b) => () => a() - b());
-```
-
-And finally, we will collapse it:
-
-```typescript
 console.log(sorted().map(l => l()));
 ```
 
 This should log our desired result, `[1, 2, 3, 4]`.
 
+## Binds and maps
+
+Let's talk about binds and maps. If you've ever learned functional programming, then this topic should come easily to you. However, if you haven't learned functional programming, this might seem very confusing. Essentially, we want to turn a lazy value `a` into a lazy value `b` given a function `<T>(a: T): Lazy<T> => b`. (In functional programming, these "functions" are called monads, but that's not the topic of this article).
+
+Here's an example of a bind function. It will take a lazy variable and return another lazy variable, but the result is the input multiplied by 2.
+
+```typescript
+const doubleLazy = <T>(val: Lazy<T>): Lazy<T> => () => val() * 2;
+```
+
+See? Binds are not that hard. But individual binds aren't that great on their own. What we need is a binder function that takes in 2 arguments, a value and a binder, and then executes the binder on the value. The only consistent thing is the type that we are binding the value to, which in our case is `Lazy`. We'll start off with the types:
+
+```typescript
+const bindLazy = <T, U>(val: Lazy<T>, binder: (value: T) => Lazy<U>): Lazy<U> => {
+    // We'll add this later...
+};
+```
+
+Great! Now that we have this, we can just put in the function body.
+
+```typescript
+const bindLazy = <T>(val: Lazy<T>, binder: (value: T) => Lazy<T>): Lazy<T> => {
+    return binder(val());
+};
+```
+
+But there's still something missing. The binder should not be restricted to the same type. For example, what if we want to bind something to a stringified version? We'll use a second generic for that.
+
+```typescript
+const bindLazy = <T, U>(val: Lazy<T>, binder: (value: T) => Lazy<U>): Lazy<U> => {
+    return binder(val());
+};
+```
+
+Cool! Now the binder function can turn the value into any type. Let's try it!
+
+```typescript
+const lazy5 = lazify(5);
+const binder = l => lazify(`Value: ${l * 2}`);
+const bound = bindLazy(lazy5, binder);
+console.log(bound); // Logs "Value: 10";
+```
+
+See? Binds are not that hard. This bind takes a lazy variable, multiplies it by 2, and then attaches a "Value: " to the front. Very simple!
+
+A similar thing to the Bind is the Map. A map is like a bind, but instead of returning a Lazy variable as the output, we will return a regular variable as the output. Essentially, we want to turn a value `a` into a value `b` given a function `<T, U>(a: T): U => b`. Here's our function:
+
+```typescript
+const mapLazy = <T, U>(val: Lazy<T>, mapper: (value: T) => U): Lazy<U> => {
+    return lazify(mapper(val()));
+}
+```
+
+Notice the `lazify` at the end. We still lazify the final result, even though the mapping function does not return a lazy output. Let's try the value doubler again, but this time with a map:
+
+```typescript
+const lazy5 = lazify(5);
+const mapper = l => `Value: ${l * 2}`;
+const mapped = mapLazy(lazy5, mapper);
+console.log(mapped); // Logs "Value: 10";
+```
+
+There we go. See? Not too hard.
 ## Should I use this?
 
-The answer is no. It sounds cool, but the way that JavaScript handles functions is not that great and it's about twice as fast to just use greedy variables. If you're using a language like Haskell where lazy evaluation is a core part of the language, that's great, but it just does not fit in JavaScript. Still, though, it's a fun idea, and I loved exploring it and checking it out.
+The answer is no. It sounds cool, but the way that JavaScript handles functions is not that great and it's about twice as fast to just use greedy variables. If you're using a language like Haskell where lazy evaluation is a core part of the language, that's great, but it just does not fit in JavaScript. Still, though, it's a fun idea, and I loved exploring it and checking it out. 
