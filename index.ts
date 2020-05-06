@@ -19,5 +19,13 @@ const lazyQuicksort = <T extends Comparable>(arr: LazyArray<T>, comparator: (a: 
 };
 
 const unsortedArr = lazyToGreedy([2, 4, 1, 3]);
-const sorted = lazyQuicksort(unsortedArr, (a, b) => () => a() - b());
+const sorted: LazyArray<number> = lazyQuicksort(unsortedArr, (a, b) => () => a() - b());
 console.log(sorted().map(l => l()));
+
+const mapLazy = <T, U>(arr: LazyArray<T>, mapper: (val: T) => U): LazyArray<U> => {
+    return lazify(arr().map(l => lazify(mapper(l()))));
+};
+
+const mapped = mapLazy(sorted, (l) => l * 2);
+
+console.log(mapped().map(l => l()));
