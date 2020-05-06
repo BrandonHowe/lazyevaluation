@@ -8,7 +8,9 @@ const lazyToGreedy = <T>(arr: T[]): Lazy<Lazy<T>[]> => {
     return lazify(arr.map(l => lazify(l)));
 };
 
-const lazyQuicksort = <T>(arr: LazyArray<T>, comparator: (a: Lazy<T>, b: Lazy<T>) => Lazy<number>): LazyArray<T> => {
+type Comparable = number | boolean;
+
+const lazyQuicksort = <T extends Comparable>(arr: LazyArray<T>, comparator: (a: Lazy<T>, b: Lazy<T>) => Lazy<number>): LazyArray<T> => {
     if (!arr().length) return arr;
     const [x, ...xs] = arr();
     const smallerSorted = lazyQuicksort(lazify(xs.filter((a) => comparator(a, x)() <= 0)), comparator);
