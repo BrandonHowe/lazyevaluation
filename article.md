@@ -78,7 +78,8 @@ Great! We have our function types implemented. Now let's move on and start defin
 Because this isn't a quicksort tutorial, I won't be talking about how to write that here. If you want to learn about how quicksort works, then I would recommend reading a different article about it. However, I will talk about the things that make this function different from a regular implementation.
 
 ```typescript
-const lazyQuicksort = <T>(arr: LazyArray<T>, comparator: (a: Lazy<T>, b: Lazy<T>) => Lazy<number>): LazyArray<T> => {
+type Comparable = number | boolean;
+const lazyQuicksort = <T extends Comparable>(arr: LazyArray<T>, comparator: (a: Lazy<T>, b: Lazy<T>) => Lazy<number>): LazyArray<T> => {
     if (!arr().length) return arr;
     const [x, ...xs] = arr();
     const smallerSorted = lazyQuicksort(lazify(xs.filter((a) => comparator(a, x)() <= 0)), comparator);
@@ -87,7 +88,7 @@ const lazyQuicksort = <T>(arr: LazyArray<T>, comparator: (a: Lazy<T>, b: Lazy<T>
 };
 ```
 
-Look at the `lazify` calls. Because this is a lazy version of quicksort, with a lazy comparator, it's important to remember that all arguments going into the comparator must be lazy. We also return a lazy array, so we `lazify` the final array.
+Look at the `lazify` calls. Because this is a lazy version of quicksort, with a lazy comparator, it's important to remember that all arguments going into the comparator must be lazy. We also return a lazy array, so we `lazify` the final array. We also make sure that T is of type number or boolean because when you subtract them, it does not return NaN.
 
 Now let's test this thing out! First we will define an unsorted, lazy array:
 
